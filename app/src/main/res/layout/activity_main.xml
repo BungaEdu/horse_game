@@ -994,7 +994,34 @@
                         android:text="Lives: 1"
                         android:textColor="@color/app_color_dark"
                         android:textSize="45sp" />
-
+                    
+                    <TextView
+                        android:id="@+id/tvAction"
+                        android:layout_width="match_parent"
+                        android:layout_height="40sp"
+                        android:layout_marginLeft="24dp"
+                        android:layout_marginTop="30dp"
+                        android:layout_marginRight="24dp"
+                        android:background="@drawable/bg_title_top"
+                        android:fontFamily="@font/amaranth_regular"
+                        android:onClick="launchAction"
+                        android:paddingTop="10dp"
+                        android:text="Next Level"
+                        android:textAlignment="center"
+                        android:textColor="@color/app_color_light"
+                        android:textSize="24sp"/>
+                    
+                    <ImageButton
+                        android:id="@+id/ibtShare"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginLeft="24dp"
+                        android:layout_marginRight="24dp"
+                        android:layout_marginBottom="40dp"
+                        android:background="@drawable/bg_title_bottom"
+                        android:onClick="launchShareGame"
+                        android:src="@drawable/ic_share"
+                        android:visibility="visible"/>
 
                 </LinearLayout>
 
