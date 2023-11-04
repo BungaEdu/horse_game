@@ -959,6 +959,46 @@
 
                 </TableLayout>
 
+                <LinearLayout
+                    android:id="@+id/lyMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginTop="20dp"
+                    android:background="@color/message_bg"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+
+                    <TextView
+                        android:id="@+id/tvIntroLevel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="30dp"
+                        android:fontFamily="@font/amaranth_regular"
+                        android:shadowColor="@color/white"
+                        android:shadowRadius="8"
+                        android:text="Level: 1"
+                        android:textColor="@color/app_color_dark"
+                        android:textSize="70sp" />
+
+                    <TextView
+                        android:id="@+id/tvIntroLives"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="40dp"
+                        android:fontFamily="@font/amaranth_regular"
+                        android:shadowColor="@color/white"
+                        android:shadowRadius="8"
+                        android:text="Lives: 1"
+                        android:textColor="@color/app_color_dark"
+                        android:textSize="45sp" />
+
+
+                </LinearLayout>
+
+
             </RelativeLayout>
 
             <!--Explicacion juego-->
