@@ -292,7 +292,6 @@
                             android:layout_weight="1"
                             android:background="@color/white_cell"
                             android:onClick="checkCellClicked"
-                            android:src="@drawable/horse"
                             android:tag="c07" />
 
                         <ImageView
@@ -461,7 +460,6 @@
                             android:layout_weight="1"
                             android:background="@color/white_cell"
                             android:onClick="checkCellClicked"
-                            android:src="@drawable/horse"
                             android:tag="c05" />
 
                         <ImageView
@@ -630,7 +628,6 @@
                             android:layout_weight="1"
                             android:background="@color/white_cell"
                             android:onClick="checkCellClicked"
-                            android:src="@drawable/horse"
                             android:tag="c03" />
 
                         <ImageView
@@ -799,7 +796,6 @@
                             android:layout_weight="1"
                             android:background="@color/white_cell"
                             android:onClick="checkCellClicked"
-                            android:src="@drawable/horse"
                             android:tag="c01" />
 
                         <ImageView

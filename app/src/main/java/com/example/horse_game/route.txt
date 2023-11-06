@@ -1,0 +1,23 @@
+ERRORES
+- Redimensionado tablero
+- quitar action bar
+-
+-
+
+MEJORAS DE UX
+- un color para el punto actual y otro para el rastro
+- mostrar opciones de movimiento
+-
+
+FUNCIONALIDADES
+- Inicio aleatorio
+- poder mover el caballo (comprobando movimiento de L)
+- pintar niveles (limpiarlos)
+- control de movimientos
+- control de opciones
+- control de tiempo
+- control de vidas
+- mostrar publicidad
+- permitir pagar para ser premium
+- habilitar acceso a más niveles premium y deshabilitar publicidad
+- opcion compartir resultado
