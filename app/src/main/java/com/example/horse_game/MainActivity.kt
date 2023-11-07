@@ -8,15 +8,23 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
+    private var widthBonus = 0
 
     //Las celdas tienes que estar siempre trakeadas
     private var cellSelectedX = 0
     private var cellSelectedY = 0
 
+    private var movesRequired = 4
+    private var moves = 64
     private var options = 0
+    private var bonus = 0
+
+    private var nameColorBlack = "black_cell"
+    private var nameColorWhite = "white_cell"
 
     //Hago un array de arrays para simular el tablero
     private lateinit var board: Array<IntArray>
@@ -87,7 +95,29 @@ class MainActivity : AppCompatActivity() {
         selectCell(coordX, coordY)
     }
 
+    private fun growProgressBonus() {
+        //var widthBonus = ((widthBonus / movesRequired) * bonusGrow).toFloat
+
+        var height = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8f, resources.displayMetrics)
+        //var width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, widthBonus, resources.displayMetrics)
+        //v.setLa
+    }
+
     private fun selectCell(x: Int, y: Int) {
+        moves--
+
+        var tvMovesData = findViewById<TextView>(R.id.tvMovesData)
+        tvMovesData.text = moves.toString()
+
+        growProgressBonus()
+
+        //Una vez hacemos el movimiento, sumamos los bonus:
+        if (board[x][y] == 2) {
+            bonus++
+            var tvBonus = findViewById<TextView>(R.id.tvBonusData)
+            tvBonus.text = " +$bonus"
+        }
+
         board[x][y] = 1
         paintHorseCell(cellSelectedX, cellSelectedY, "previus_cell")
 
@@ -97,14 +127,68 @@ class MainActivity : AppCompatActivity() {
         clearOptions()
         paintHorseCell(x, y, "selected_cell")
         checkOptions(x, y)
+
+        if (moves > 0) {
+            checkNewBonus()
+            //checkGameOver()
+        } //else checkSuccessfullEnd()
     }
 
-    private fun clearOptions () {
+    private fun checkNewBonus() {
+        if (moves % movesRequired == 0) {
+            var bonusCellX = 0
+            var bonusCellY = 0
+
+            var bonusCell = false
+            while (bonusCell == false) {
+                bonusCellX = (0..7).random()
+                bonusCellY = (0..7).random()
+                if (board[bonusCellX][bonusCellY] == 0) bonusCell = true
+            }
+            board[bonusCellX][bonusCellY] = 2
+            paintBonusCell(bonusCellX, bonusCellY)
+        }
+    }
+
+    private fun paintBonusCell(x: Int, y: Int) {
+        var iv: ImageView = findViewById(resources.getIdentifier("c$x$y", "id", packageName))
+        iv.setImageResource(R.drawable.bonus)
+    }
+
+
+    private fun clearOptions() {
         for (i in 0..7) {
             for (j in 0..7) {
-                if (board[i][y])
+                if (board[i][j] == 9) board[i][j] = 0
+                clearOption(i, j)
             }
         }
+    }
+
+    private fun clearOption(x: Int, y: Int) {
+        var iv: ImageView = findViewById(resources.getIdentifier("c$x$y", "id", packageName))
+        if (checkColorCell(x, y) == "black")
+            iv.setBackgroundColor(
+                ContextCompat.getColor(
+                    this,
+                    resources.getIdentifier(nameColorBlack, "color", packageName)
+                )
+            )
+        else
+            iv.setBackgroundColor(
+                ContextCompat.getColor(
+                    this,
+                    resources.getIdentifier(nameColorWhite, "color", packageName)
+                )
+            )
+        if (board[x][y] == 1)
+            iv.setBackgroundColor(
+                ContextCompat.getColor(
+                    this,
+                    resources.getIdentifier("previus_cell", "color", packageName)
+                )
+            )
+
     }
 
     private fun checkOptions(x: Int, y: Int) {
@@ -118,6 +202,10 @@ class MainActivity : AppCompatActivity() {
         checkMove(x, y, -2, 1) // Check move left long - top
         checkMove(x, y, -1, -2) // Check move left - bottom long
         checkMove(x, y, -2, -1) // Check move left long - bottom
+
+        //Aquí dejo a cero el textview que muestra las opciones
+        var tvOptionsData = findViewById<TextView>(R.id.tvOptionsData)
+        tvOptionsData.text = options.toString()
     }
 
     private fun checkMove(x: Int, y: Int, movX: Int, movY: Int) {
