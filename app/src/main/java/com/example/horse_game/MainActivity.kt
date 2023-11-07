@@ -16,6 +16,8 @@ class MainActivity : AppCompatActivity() {
     private var cellSelectedX = 0
     private var cellSelectedY = 0
 
+    private var options = 0
+
     //Hago un array de arrays para simular el tablero
     private lateinit var board: Array<IntArray>
 
@@ -28,11 +30,33 @@ class MainActivity : AppCompatActivity() {
         setFirstPosition()
     }
 
-    fun checkCellClicked (v:View) {
+    fun checkCellClicked(v: View) {
         var name = v.tag.toString()
         var x = name.subSequence(1, 2).toString().toInt()
         var y = name.subSequence(2, 3).toString().toInt()
-        selectCell(x, y)
+
+        checkCell(x, y)
+    }
+
+    private fun checkCell(x: Int, y: Int) {
+        var difX = x - cellSelectedX
+        var difY = y - cellSelectedY
+
+        var checkTrue = false
+
+        if (difX == 1 && difY == 2) checkTrue = true // right - top long
+        if (difX == 1 && difY == -2) checkTrue = true // right - bottom long
+        if (difX == 2 && difY == 1) checkTrue = true // right long - top
+        if (difX == 2 && difY == -1) checkTrue = true // right long - bottom
+        if (difX == -1 && difY == 2) checkTrue = true // left - top long
+        if (difX == -1 && difY == -2) checkTrue = true // left - bottom long
+        if (difX == -2 && difY == 1) checkTrue = true // left long - top
+        if (difX == -2 && difY == -1) checkTrue = true // left long - bottom
+
+        //Si ya hay otro caballo ahí
+        if (board[x][y] == 1) checkTrue = false
+
+        if (checkTrue) selectCell(x, y)
     }
 
     private fun resetBoard() {
@@ -66,9 +90,70 @@ class MainActivity : AppCompatActivity() {
     private fun selectCell(x: Int, y: Int) {
         board[x][y] = 1
         paintHorseCell(cellSelectedX, cellSelectedY, "previus_cell")
+
         cellSelectedX = x
         cellSelectedY = y
+
+        clearOptions()
         paintHorseCell(x, y, "selected_cell")
+        checkOptions(x, y)
+    }
+
+    private fun clearOptions () {
+        for (i in 0..7) {
+            for (j in 0..7) {
+                if (board[i][y])
+            }
+        }
+    }
+
+    private fun checkOptions(x: Int, y: Int) {
+        //acuerdate que esta es "global"
+        options = 0
+        checkMove(x, y, 1, 2) // Check move right - top long
+        checkMove(x, y, 2, 1) // Check move right long - top
+        checkMove(x, y, 1, -2) // Check move right - bottom long
+        checkMove(x, y, 2, -1) // Check move right long - bottom
+        checkMove(x, y, -1, 2) // Check move left - top long
+        checkMove(x, y, -2, 1) // Check move left long - top
+        checkMove(x, y, -1, -2) // Check move left - bottom long
+        checkMove(x, y, -2, -1) // Check move left long - bottom
+    }
+
+    private fun checkMove(x: Int, y: Int, movX: Int, movY: Int) {
+        var optionX = x + movX
+        var optionY = y + movY
+
+        //Vamos a ver si estamos dentro del tablero
+        if (optionX < 8 && optionY < 8 && optionX >= 0 && optionY >= 0) {
+            //Vamos a comprobar si esa posición está libre o es un bonus
+            if (board[optionX][optionY] == 0 || board[optionX][optionY] == 2) {
+                options++
+                paintOptions(optionX, optionY)
+                board[optionX][optionY] = 9
+
+            }
+        }
+
+    }
+
+    private fun paintOptions(x: Int, y: Int) {
+        var iv: ImageView = findViewById(resources.getIdentifier("c$x$y", "id", packageName))
+        if (checkColorCell(x, y) == "black") iv.setBackgroundResource(R.drawable.option_black)
+        else iv.setBackgroundResource(R.drawable.option_white)
+    }
+
+    private fun checkColorCell(x: Int, y: Int): String {
+        var color = ""
+        var blackColumnX = arrayOf(0, 2, 4, 6)
+        var blackRowX = arrayOf(1, 3, 5, 7)
+        if ((blackColumnX.contains(x) && blackColumnX.contains(y))
+            || (blackRowX.contains(x) && blackRowX.contains(y))
+        )
+            color = "black"
+        else color = "white"
+
+        return color
     }
 
     private fun paintHorseCell(x: Int, y: Int, color: String) {
