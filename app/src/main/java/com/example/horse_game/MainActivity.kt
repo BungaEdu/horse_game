@@ -8,6 +8,7 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TableRow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 
@@ -18,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private var cellSelectedX = 0
     private var cellSelectedY = 0
 
+    private var levelMoves = 64
     private var movesRequired = 4
     private var moves = 64
     private var options = 0
@@ -96,11 +98,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun growProgressBonus() {
-        //var widthBonus = ((widthBonus / movesRequired) * bonusGrow).toFloat
+        var movesDone = levelMoves - moves
+        var bonusDone = movesDone / movesRequired
+        var movesRest = movesRequired * (bonusDone)
+        var bonusGrow = movesDone - movesRest
 
-        var height = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8f, resources.displayMetrics)
-        //var width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, widthBonus, resources.displayMetrics)
-        //v.setLa
+        var v = findViewById<View>(R.id.vNewBonus)
+        var widthBonus = ((widthBonus / movesRequired) * bonusGrow).toFloat()
+
+        var height =
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8f, resources.displayMetrics)
+                .toInt()
+        var width = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            widthBonus,
+            resources.displayMetrics
+        ).toInt()
+        v.layoutParams = TableRow.LayoutParams(width, height)
     }
 
     private fun selectCell(x: Int, y: Int) {
@@ -130,8 +144,36 @@ class MainActivity : AppCompatActivity() {
 
         if (moves > 0) {
             checkNewBonus()
-            //checkGameOver()
-        } //else checkSuccessfullEnd()
+            checkGameOver(x, y)
+        } else showMessage("You win!", "Next Level!", false)
+    }
+
+    private fun checkGameOver(x: Int, y: Int) {
+        if (options == 0) {
+            if (bonus == 0) showMessage("Game Over", "Try Again!", true)
+        }
+    }
+
+    private fun showMessage(title: String, action: String, gameOver: Boolean) {
+        var lyMessage = findViewById<LinearLayout>(R.id.lyMessage)
+        lyMessage.visibility = View.VISIBLE
+
+        var tvTitleMessage = findViewById<TextView>(R.id.tvTitleMessage)
+        tvTitleMessage.text = title
+
+        var tvTimeData = findViewById<TextView>(R.id.tvTimeData)
+        var score: String = ""
+        if (gameOver) {
+            score = "Score " + (levelMoves - moves) + "/" + levelMoves
+        } else {
+            score = tvTimeData.text.toString()
+        }
+
+        var tvScoreMessage = findViewById<TextView>(R.id.tvScoreMessage)
+        tvScoreMessage.text = score
+        var tvAction = findViewById<TextView>(R.id.tvAction)
+        tvAction.text = action
+
     }
 
     private fun checkNewBonus() {
@@ -154,7 +196,6 @@ class MainActivity : AppCompatActivity() {
         var iv: ImageView = findViewById(resources.getIdentifier("c$x$y", "id", packageName))
         iv.setImageResource(R.drawable.bonus)
     }
-
 
     private fun clearOptions() {
         for (i in 0..7) {
@@ -218,8 +259,7 @@ class MainActivity : AppCompatActivity() {
             if (board[optionX][optionY] == 0 || board[optionX][optionY] == 2) {
                 options++
                 paintOptions(optionX, optionY)
-                board[optionX][optionY] = 9
-
+                if (board[optionX][optionY] == 0) board[optionX][optionY] = 9
             }
         }
 
@@ -276,6 +316,8 @@ class MainActivity : AppCompatActivity() {
         val widthCell = (widthDp - lateralMarginsDp) / 8
         //Al ser cuadrados pongo el mismo ancho que largo
         val heightCell = widthCell
+
+        widthBonus = widthCell.toInt() * 2
 
         for (i in 0..7)
             for (j in 0..7) {
