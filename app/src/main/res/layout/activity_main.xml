@@ -256,7 +256,7 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/amaranth_bold"
                             android:paddingBottom="10dp"
-                            android:text="5"
+                            android:text=""
                             android:textColor="@color/app_color_light"
                             android:textSize="18sp" />
 
