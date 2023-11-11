@@ -4,6 +4,7 @@ import android.graphics.Point
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
@@ -12,9 +13,13 @@ import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import org.w3c.dom.Text
+import java.sql.Time
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     private var mHandler: Handler?= null
+    private var timeInSeconds = 0L
 
     private var widthBonus = 0
 
@@ -393,22 +398,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resetTime() {
+        mHandler?.removeCallbacks(chronometer)
+        timeInSeconds = 0
 
+        var tvTimeData = findViewById<TextView>(R.id.tvTimeData)
+        tvTimeData.text = "00:00"
     }
 
     private fun startTime() {
-
+        mHandler = Handler(Looper.getMainLooper())
+        chronometer.run()
     }
 
     //Voy a hacer mi cronómetro, es un ejecutable
     private var chronometer: Runnable = object: Runnable {
         override fun run() {
+            //El try lo que hace es una ecución y el finally lo que hace
+            //es que se vuelva a repetir el bucle
             try {
-
+                timeInSeconds++
+                updateStopWatchView(timeInSeconds)
             } finally {
-
+                //el Handler es para manejar algo
+                //El postdelayed es para repetir algo (this) por cada tiempo(1000L)
+                //Creando un bucle
+                mHandler!!.postDelayed(this, 1000L)
             }
         }
+    }
+
+    private fun updateStopWatchView(timeInSeconds: Long) {
+        val formattedTime = getFormattedStopWatch((timeInSeconds * 1000))
+        var tvTimeData = findViewById<TextView>(R.id.tvTimeData)
+        tvTimeData.text = formattedTime
+    }
+
+    private fun getFormattedStopWatch(ms:Long): String {
+        //Los miliss se pasan a minutos y los miliss restantes se pasan a segundos
+        var milliseconds = ms
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds)
+        milliseconds -= TimeUnit.MINUTES.toMillis(minutes)
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds)
+
+        //Si munutos o segundos es menor que 10, le añadirá un cero delante
+        return "${if (minutes <10) "0" else ""}$minutes:" +
+            "${if (seconds<10) "0" else ""}$seconds"
     }
 
     private fun startGame () {
