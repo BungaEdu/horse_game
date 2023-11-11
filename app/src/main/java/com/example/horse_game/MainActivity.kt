@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 class MainActivity : AppCompatActivity() {
     private var mHandler: Handler?= null
     private var timeInSeconds = 0L
+    private var gaming = true
 
     private var widthBonus = 0
 
@@ -28,7 +29,7 @@ class MainActivity : AppCompatActivity() {
     private var cellSelectedY = 0
 
     private var levelMoves = 64
-    private var movesRequired = 4
+    private var movesRequired = 20
     private var moves = 64
     private var options = 0
     private var bonus = 0
@@ -143,9 +144,7 @@ class MainActivity : AppCompatActivity() {
 
         //Una vez hacemos el movimiento, sumamos los bonus:
         if (board[x][y] == 2) {
-            Log.d("BONUS - PRE", bonus.toString())
             bonus++
-            Log.d("BONUS - POST", bonus.toString())
             var tvBonus = findViewById<TextView>(R.id.tvBonusData)
             tvBonus.text = " + $bonus"
         }
@@ -319,6 +318,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun showMessage(title: String, action: String, gameOver: Boolean) {
+        //Esto significa que no estamos jugando, porque ya ha salido el mensaje
+        gaming = false
+
         var lyMessage = findViewById<LinearLayout>(R.id.lyMessage)
         lyMessage.visibility = View.VISIBLE
 
@@ -410,14 +412,20 @@ class MainActivity : AppCompatActivity() {
         chronometer.run()
     }
 
-    //Voy a hacer mi cronómetro, es un ejecutable
+    //Voy a hacer mi cronómetro, es un ejecutable, nunca se detiene,
+    //por lo que le voy a decir que sólo funcione mientras estamos jugando
     private var chronometer: Runnable = object: Runnable {
         override fun run() {
             //El try lo que hace es una ecución y el finally lo que hace
             //es que se vuelva a repetir el bucle
             try {
-                timeInSeconds++
-                updateStopWatchView(timeInSeconds)
+                if (gaming) {
+                    //En showmessage ponemos que que gaming es false,
+                    //Porque cuando se muestra el mensaje significa que no estamos jugamos
+                    timeInSeconds++
+                    Log.d("CHRONOMETER", timeInSeconds.toString())
+                    updateStopWatchView(timeInSeconds)
+                }
             } finally {
                 //el Handler es para manejar algo
                 //El postdelayed es para repetir algo (this) por cada tiempo(1000L)
@@ -446,6 +454,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startGame () {
+        //El gaming se queda en false cuando se termina la partida
+        //por lo que hay que dejarlo en true siempre que empiece
+        gaming = true
+
         resetBoard()
         clearBoard()
         setFirstPosition()
