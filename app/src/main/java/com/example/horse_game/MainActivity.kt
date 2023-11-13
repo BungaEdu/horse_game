@@ -1,10 +1,18 @@
 package com.example.horse_game
 
+import android.Manifest
+import android.content.ContentValues
+import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Point
+import android.media.MediaScannerConnection
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
@@ -12,27 +20,50 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import org.w3c.dom.Text
-import java.sql.Time
+import androidx.test.runner.screenshot.ScreenCapture
+import androidx.test.runner.screenshot.Screenshot.capture
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+    private var bitmap: Bitmap? = null
+
     private var mHandler: Handler?= null
     private var timeInSeconds = 0L
     private var gaming = true
-
+    private var stringShare = ""
     private var widthBonus = 0
 
     //Las celdas tienes que estar siempre trakeadas
     private var cellSelectedX = 0
     private var cellSelectedY = 0
 
-    private var levelMoves = 64
-    private var movesRequired = 20
-    private var moves = 64
+    //Nos avisa si tenemos que avanzar de nivel o no, en este
+    //caso inicializaremos con false
+    private var nextLevel = false
+
+
+    //Siempre se va a empezar por el nivel 1
+    //cada nivel va a tener un número de movimientos
+    //en cada nivel vamos a poner que se requieran X movimientos
+    //para conseguir el bonus
+    private var level = 1
+    private var levelMoves = 0
+    private var movesRequired = 0
+    private var moves = 0
+    private var lives = 0
+    //Inicializamos a 1 porque nunca va a empezar a cero
+    private var scoreLives = 1
+    private var scoreLevel = 1
+
     private var options = 0
     private var bonus = 0
+
 
     //Cuando hay bonus tenemos que dejar hacer movimientos adicionales
     private var checkMovement = true
@@ -55,7 +86,7 @@ class MainActivity : AppCompatActivity() {
     ////////////// INICIO JUEGO ///////////////
     private fun initScreenGame() {
         setSizeBoard()
-        hideMessage()
+        hideMessage(false)
     }
     private fun setSizeBoard() {
         var iv: ImageView
@@ -91,9 +122,127 @@ class MainActivity : AppCompatActivity() {
                 )
             }
     }
-    private fun hideMessage() {
+    private fun hideMessage(start: Boolean) {
         var lyMessage = findViewById<LinearLayout>(R.id.lyMessage)
         lyMessage.visibility = View.INVISIBLE
+
+        if (start) startGame()
+    }
+
+    fun launchAction(v:View) {
+        //Vamos a hacer que el mensaje se quite, o salga de nuevo dependiendo de los niveles
+        hideMessage(true)
+
+    }
+
+    //Esta función sólo hace una llamada
+    fun launchShareGame(v: View) {
+        //Lo dejo en una función para que el código sea más reutilizable
+        shareGame()
+    }
+
+    private fun shareGame() {
+        //Vamos a pedir al usuario permisos de lectura y escritura para guardar la foto
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            1
+        )
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+            1
+        )
+
+        //Sacamos la captura de pantalla
+        var ssc: ScreenCapture = capture(this)
+        bitmap = ssc.bitmap
+
+        //Si hay captura de pantalla, entonces procedemos
+        if (bitmap!=null) {
+            //Buscamos un nombre para el archivo que no se va a repetir nunca
+            //el tiempo de la partida es bueno, porque en una partida sólo
+            //va a haber un tiempo
+            var idGame = SimpleDateFormat("yyyy/MM/dd").format(Date())
+            idGame = idGame.replace(":", "")
+            idGame = idGame.replace("/", "")
+
+            //Creamos una ruta de donde se va a guardar la imagen
+            val path = saveImage(bitmap!!, "${idGame}.jpg")
+
+            //Como queremos compartir la foto, tenemos que tenerla referenciada
+            val bmUri = Uri.parse(path)
+
+            //Para compartir la foto vamos a hacer:
+            //Para enviar creamos el intent
+            val shareIntent = Intent(Intent.ACTION_SEND)
+            //Creamos una nueva tarea, porque cuando hagamos el envío a otra
+            //app será una nueva tarea
+            shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            //Indicamos lo que estamos enviando, que referencia a la imagen
+            shareIntent.putExtra(Intent.EXTRA_STREAM, bmUri)
+            //Con qué texto se va a enviar esa imagen (Si es WA un texto, si es TW otro)
+            //Dependiendo de lo que se comparta lo vamos a hacer en el showMessage()
+            shareIntent.putExtra(Intent.EXTRA_TEXT, stringShare)
+            shareIntent.type = "image/png"
+
+            //Intent donde se le permita al US elegir dónde compartir la captura
+            val finalShareIntent = Intent.createChooser(shareIntent, "Select the app you want to share the game to")
+            finalShareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            this.startActivity(finalShareIntent)
+        }
+    }
+
+    private fun saveImage(bitmap: Bitmap?, fileName: String): String? {
+        if (bitmap == null) return null
+
+        //Comprobamos el sdk
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            //Decidimos cómo se va a guardar
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                put(
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    Environment.DIRECTORY_PICTURES + "/Screenshots"
+                )
+            }
+
+            val uri = this.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
+            if (uri != null) {
+                this.contentResolver.openOutputStream(uri).use {
+                    if (it == null) return@use
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 85, it)
+                    it.flush()
+                    it.close()
+
+                    // add pic to gallery
+                    MediaScannerConnection.scanFile(this, arrayOf(uri.toString()), null, null)
+                }
+            }
+            return uri.toString()
+        }
+
+        val filePath = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_PICTURES + "/Screenshots"
+        ).absolutePath
+
+        //Toast.maketext(this, filePath, Toast.LENGTH_LONG),show()
+        val dir = File(filePath)
+        if (!dir.exists()) dir.mkdirs()
+        val file = File(dir, fileName)
+        val fOut = FileOutputStream(file)
+
+        bitmap.compress(Bitmap.CompressFormat.PNG, 85, fOut)
+        fOut.flush()
+        fOut.close()
+
+        //add pic to gallery
+        MediaScannerConnection.scanFile(this, arrayOf(file.toString()), null, null)
+        return filePath
     }
 
     ////////////// CELDAS ///////////////
@@ -159,7 +308,7 @@ class MainActivity : AppCompatActivity() {
         paintHorseCell(x, y, "selected_cell")
         checkMovement = true
 
-        checkOption(x, y)
+        checkOptions(x, y)
 
         if (moves > 0) {
             checkNewBonus()
@@ -183,7 +332,6 @@ class MainActivity : AppCompatActivity() {
             intArrayOf(0, 0, 0, 0, 0, 0, 0, 0)
         )
     }
-
     private fun clearBoard() {
         var iv: ImageView
         var colorBlack = ContextCompat.getColor(
@@ -206,17 +354,170 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun setFirstPosition() {
         var coordX = 0
         var coordY = 0
-        coordX = (0..7).random()
-        coordY = (0..7).random()
+
+        var firstPosition = false
+
+        while (firstPosition == false) {
+            coordX = (0..7).random()
+            coordY = (0..7).random()
+            if (board[coordX][coordY]==0) firstPosition = true
+            checkOptions(coordX, coordY)
+            if (options==0) firstPosition = false
+        }
+
+
+
         //Estas dos var son generales
         cellSelectedX = coordX
         cellSelectedY = coordY
         selectCell(coordX, coordY)
     }
+
+    private fun setLevel() {
+        if (nextLevel) level++
+        else {
+            lives--
+            if (lives<1) {
+                level=1
+                lives=1
+            }
+        }
+    }
+
+    private fun setLevelParameters() {
+        var tvLiveData = findViewById<TextView>(R.id.tvLiveData)
+        tvLiveData.text = lives.toString()
+
+        scoreLives = lives
+
+        var tvLevelNumber = findViewById<TextView>(R.id.tvLevelNumber)
+        tvLevelNumber.text = level.toString()
+        scoreLevel = level
+
+        bonus = 0
+        var tvBonusData = findViewById<TextView>(R.id.tvBonusData)
+        tvBonusData.text = ""
+
+        setLevelMoves()
+        moves = levelMoves
+
+        movesRequired = setMovesRequired()
+    }
+    private fun setLevelMoves() {
+        when (level) {
+            1 -> levelMoves = 64
+            2 -> levelMoves = 56
+            3 -> levelMoves = 32
+            4 -> levelMoves = 16
+            5 -> levelMoves = 48
+            6 -> levelMoves = 36
+            7 -> levelMoves = 48
+            8 -> levelMoves = 49
+            9 -> levelMoves = 59
+            10 -> levelMoves = 48
+            11 -> levelMoves = 64
+            12 -> levelMoves = 48
+            13 -> levelMoves = 48
+        }
+    }
+    private fun setMovesRequired(): Int {
+        var movesRequired = 0
+
+        when (level) {
+            1 -> movesRequired = 8
+            2 -> movesRequired = 10
+            3 -> movesRequired = 12
+            4 -> movesRequired = 10
+            5 -> movesRequired = 10
+            6 -> movesRequired = 12
+            7 -> movesRequired = 5
+            8 -> movesRequired = 7
+            9 -> movesRequired = 9
+            10 -> movesRequired = 8
+            11 -> movesRequired = 1000
+            12 -> movesRequired = 5
+            13 -> movesRequired = 5
+        }
+
+        return movesRequired
+    }
+
+    private fun setBoardLevel () {
+        when (level) {
+            2 -> paintLevel_2()
+            3 -> paintLevel_3()
+            4 -> paintLevel_4()
+            5 -> paintLevel_5()
+            /*
+            * TODO hacer más niveles XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            6 -> paintLevel_6()
+            7 -> paintLevel_7()
+            8 -> paintLevel_8()
+            9 -> paintLevel_9()
+            10 -> paintLevel_10()
+            11 -> paintLevel_11()
+            12 -> paintLevel_12()
+            13 -> paintLevel_13()
+             */
+        }
+    }
+
+
+    /////////////// UTILS para los tableros/////////////////////////////////////////
+    private fun paintColumn(column:Int){
+        for (i in 0..7) {
+            board[column][i] = 1
+            paintHorseCell(column, i, "previus_cell")
+
+        }
+    }
+    /*
+    * TODO hacer mas funciones XXXXXXXXXXXXXXXXXXX
+    * TODO private fun paintRow(row:Int) {}
+    * TODO private fun paintDiagonal(diagonal:Int) {}
+    * TODO private fun paintDiagonalInverse(diagonal:Int) {}
+    * TODO private fun paintRow(row:Int) {}
+     */
+    /////////////// NIVELES TABLEROS ///////////////////////////////////////////////
+    //Pinta la columna 6
+    private fun paintLevel_2(){
+        paintColumn(6)
+    }
+    //Pinta un cuadrado
+    private fun paintLevel_3(){
+        paintColumn(4)
+        paintColumn(5)
+        paintColumn(6)
+        paintColumn(7)
+    }
+
+    private fun paintLevel_4() {
+        paintLevel_3()
+        paintLevel_5()
+    }
+
+    private fun paintLevel_5(){
+        for (i in 0..7) {
+            for (j in 4..7) {
+                board[i][j] = 1
+                paintHorseCell(j, i, "previus_cell")
+            }
+        }
+    }
+
+    /*
+    * TODO private fun paintLevel_6(){}
+    * TODO private fun paintLevel_7(){}
+    * TODO private fun paintLevel_8(){}
+    * TODO private fun paintLevel_9(){}
+    * TODO private fun paintLevel_10(){}
+    * TODO private fun paintLevel_11(){}
+    * TODO private fun paintLevel_12(){}
+    * TODO private fun paintLevel_13(){}
+     */
 
     ////////////// BONUS ///////////////
     private fun checkNewBonus() {
@@ -321,6 +622,10 @@ class MainActivity : AppCompatActivity() {
         //Esto significa que no estamos jugando, porque ya ha salido el mensaje
         gaming = false
 
+        //Tengo que verificar que si no he perdido, significa que he ganado, por lo que avanzo de nivel
+        //if(gameOver == false) nextLevel == true
+        gameOver != nextLevel
+
         var lyMessage = findViewById<LinearLayout>(R.id.lyMessage)
         lyMessage.visibility = View.VISIBLE
 
@@ -331,8 +636,10 @@ class MainActivity : AppCompatActivity() {
         var score: String = ""
         if (gameOver) {
             score = "Score " + (levelMoves - moves) + "/" + levelMoves
+            stringShare = "This game make me sick!!! " + score + ") jotajotavm.com/retocaballo"
         } else {
             score = tvTimeData.text.toString()
+            stringShare = "Let's go!! New challenge completed. Level: $level (" + score + ") jotajotavm.com/retocaballo"
         }
 
         var tvScoreMessage = findViewById<TextView>(R.id.tvScoreMessage)
@@ -343,7 +650,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     ////////////// CHECKS ///////////////
-    private fun checkOption(x: Int, y: Int) {
+    private fun checkOptions(x: Int, y: Int) {
         //acuerdate que esta es "global"
         options = 0
         checkMove(x, y, 1, 2) // Check move right - top long
@@ -453,16 +760,26 @@ class MainActivity : AppCompatActivity() {
             "${if (seconds<10) "0" else ""}$seconds"
     }
 
-    private fun startGame () {
-        //El gaming se queda en false cuando se termina la partida
-        //por lo que hay que dejarlo en true siempre que empiece
-        gaming = true
+    //Esta función se llama varias veces, tanto en el inicio, como después de que se muestre el mensaje
+    private fun startGame() {
+        setLevel()
+
+        //Para probar los niveles puedo poner el nivel aquí directamente
+        level = 5
+
+        setLevelParameters()
 
         resetBoard()
         clearBoard()
+
+        setBoardLevel()
         setFirstPosition()
 
         resetTime()
         startTime()
+
+        //El gaming se queda en false cuando se termina la partida
+        //por lo que hay que dejarlo en true siempre que empiece
+        gaming = true
     }
 }
