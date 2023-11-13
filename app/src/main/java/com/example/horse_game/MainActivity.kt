@@ -377,13 +377,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setLevel() {
-        if (nextLevel) level++
+        if (nextLevel) {
+            //Cuando subo el nivel, sumo las vidas
+            level++
+            setLives()
+        }
         else {
             lives--
             if (lives<1) {
                 level=1
                 lives=1
             }
+        }
+    }
+
+    private fun setLives() {
+        when (level) {
+            1-> level = 1
+            2-> level = 2
+            3-> level = 3
+            4-> level = 4
+            5-> level = 5
         }
     }
 
