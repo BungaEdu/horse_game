@@ -24,6 +24,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.test.runner.screenshot.ScreenCapture
 import androidx.test.runner.screenshot.Screenshot.capture
+import com.google.android.gms.ads.*
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.mediation.MediationBannerAd
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -31,6 +35,9 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+    private var mInterstitialAd: InterstitialAd? = null
+    private var unloadedAd = true
+
     private var bitmap: Bitmap? = null
 
     private var mHandler: Handler?= null
@@ -80,6 +87,62 @@ class MainActivity : AppCompatActivity() {
 
         initScreenGame()
         startGame()
+        initAds()
+
+    }
+
+    //Anuncios, está to+do en la web de Admob
+    //BANNER
+    private fun initAds() {
+        MobileAds.initialize(this) {}
+
+        val adView = AdView(this)
+        adView.adSize = AdSize.BANNER
+        adView.adUnitId = "ca-app-pub-3940256099942544/6300978111"
+        // TODO: Add adView to your view hierarchy.
+
+        var lyAdsBanner = findViewById<LinearLayout>(R.id.lyAdsBanner)
+        lyAdsBanner.addView(adView)
+
+        val adRequest = AdRequest.Builder().build()
+        adView.loadAd(adRequest)
+
+    }
+
+    private fun showInterstitial() {
+        if (mInterstitialAd != null) {
+            unloadedAd = true
+            /*mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    // Called when ad is dismissed.
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                    // Called when ad fails to show.
+                }
+
+                override fun onAdShowedFullScreenContent() {
+                    // Called when ad is shown.
+                    mInterstitialAd = null
+                }
+            }*/
+            mInterstitialAd?.show(this)
+        }
+    }
+
+    private fun getReadyAds () {
+        var adRequest = AdRequest.Builder().build()
+        unloadedAd = false
+
+        InterstitialAd.load(this,"ca-app-pub-3940256099942544/1033173712", adRequest, object : InterstitialAdLoadCallback() {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                mInterstitialAd = null
+            }
+
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                mInterstitialAd = interstitialAd
+            }
+        })
 
     }
 
@@ -393,11 +456,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun setLives() {
         when (level) {
-            1-> level = 1
-            2-> level = 2
-            3-> level = 3
-            4-> level = 4
-            5-> level = 5
+            1-> lives = 1
+            2-> lives = 2
+            3-> lives = 3
+            4-> lives = 4
+            5-> lives = 5
         }
     }
 
@@ -507,12 +570,10 @@ class MainActivity : AppCompatActivity() {
         paintColumn(6)
         paintColumn(7)
     }
-
     private fun paintLevel_4() {
         paintLevel_3()
         paintLevel_5()
     }
-
     private fun paintLevel_5(){
         for (i in 0..7) {
             for (j in 4..7) {
@@ -521,7 +582,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     /*
     * TODO private fun paintLevel_6(){}
     * TODO private fun paintLevel_7(){}
@@ -649,6 +709,7 @@ class MainActivity : AppCompatActivity() {
         var tvTimeData = findViewById<TextView>(R.id.tvTimeData)
         var score: String = ""
         if (gameOver) {
+            showInterstitial()
             score = "Score " + (levelMoves - moves) + "/" + levelMoves
             stringShare = "This game make me sick!!! " + score + ") jotajotavm.com/retocaballo"
         } else {
@@ -719,7 +780,6 @@ class MainActivity : AppCompatActivity() {
         )
         iv.setImageResource(R.drawable.horse)
     }
-
     private fun resetTime() {
         mHandler?.removeCallbacks(chronometer)
         timeInSeconds = 0
@@ -727,7 +787,6 @@ class MainActivity : AppCompatActivity() {
         var tvTimeData = findViewById<TextView>(R.id.tvTimeData)
         tvTimeData.text = "00:00"
     }
-
     private fun startTime() {
         mHandler = Handler(Looper.getMainLooper())
         chronometer.run()
@@ -761,7 +820,6 @@ class MainActivity : AppCompatActivity() {
         var tvTimeData = findViewById<TextView>(R.id.tvTimeData)
         tvTimeData.text = formattedTime
     }
-
     private fun getFormattedStopWatch(ms:Long): String {
         //Los miliss se pasan a minutos y los miliss restantes se pasan a segundos
         var milliseconds = ms
@@ -776,10 +834,17 @@ class MainActivity : AppCompatActivity() {
 
     //Esta función se llama varias veces, tanto en el inicio, como después de que se muestre el mensaje
     private fun startGame() {
+        //Siempre que empecemos partida cargamos los datos
+        if (unloadedAd) getReadyAds()
+
+        //El gaming se queda en false cuando se termina la partida
+        //por lo que hay que dejarlo en true siempre que empiece
+        gaming = true
+
         setLevel()
 
         //Para probar los niveles puedo poner el nivel aquí directamente
-        level = 5
+        //level = 2
 
         setLevelParameters()
 
@@ -791,9 +856,5 @@ class MainActivity : AppCompatActivity() {
 
         resetTime()
         startTime()
-
-        //El gaming se queda en false cuando se termina la partida
-        //por lo que hay que dejarlo en true siempre que empiece
-        gaming = true
     }
 }

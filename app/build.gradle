@@ -41,4 +41,9 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'androidx.test:runner:1.5.2'
+
+    //Esta es la más actualizada, pero de momento no es compatible con mi app
+    //implementation 'com.google.android.gms:play-services-ads:22.5.0'
+    implementation 'com.google.android.gms:play-services-ads:20.1.0'
+
 }

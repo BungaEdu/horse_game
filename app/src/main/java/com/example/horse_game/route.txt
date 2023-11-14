@@ -1,8 +1,19 @@
 ERRORES
-- Redimensionado tablero
-- quitar action bar
+- Cuando pongo paso de nivel el tvLevel no se actualiza, es decir, no pasa al 2
+no se carga nada, tampoco el tablero 2.
 -
 -
+-
+
+
+
+
+
+
+
+
+
+
 
 MEJORAS DE UX
 - un color para el punto actual y otro para el rastro
