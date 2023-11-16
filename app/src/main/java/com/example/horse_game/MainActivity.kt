@@ -504,11 +504,14 @@ class MainActivity : AppCompatActivity() {
         var movesRequired = 0
 
         when (level) {
-            1 -> movesRequired = 8
-            2 -> movesRequired = 10
-            3 -> movesRequired = 12
-            4 -> movesRequired = 10
-            5 -> movesRequired = 10
+            //Los moves son 8,10,12,10,10
+            /*TODO pongo 3 para comprobaciones, hay que quitarlo*/
+            1 -> movesRequired = 3
+            2 -> movesRequired = 3
+            3 -> movesRequired = 3
+            4 -> movesRequired = 3
+            5 -> movesRequired = 3
+            /*
             6 -> movesRequired = 12
             7 -> movesRequired = 5
             8 -> movesRequired = 7
@@ -517,6 +520,7 @@ class MainActivity : AppCompatActivity() {
             11 -> movesRequired = 1000
             12 -> movesRequired = 5
             13 -> movesRequired = 5
+            */
         }
 
         return movesRequired
