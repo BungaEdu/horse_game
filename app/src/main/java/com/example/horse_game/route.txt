@@ -1,13 +1,9 @@
 ERRORES
 - Cuando pongo paso de nivel el tvLevel no se actualiza, es decir, no pasa al 2
 no se carga nada, tampoco el tablero 2.
+- hay un error con InterstitialAd, no se carga, tiene que ver con algo del arranque
+- debuggear el start, no está yendo bien.
 -
--
--
-
-
-
-
 
 
 
